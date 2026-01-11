@@ -1,4 +1,4 @@
-package com.mynextduty.core.security;
+package com.mynextduty.core.service;
 
 import com.mynextduty.core.dto.auth.CustomUserDetails;
 import com.mynextduty.core.entity.User;
@@ -19,10 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     User user =
         userRepository
             .findByEmail(email)
-            .orElseThrow(
-                () ->
-                    new UserNotFoundException(
-                        "User not found: " + email));
+            .orElseThrow(() -> new UserNotFoundException("User not found: " + email));
     return CustomUserDetails.builder()
         .username(user.getEmail())
         .password(user.getPassword())

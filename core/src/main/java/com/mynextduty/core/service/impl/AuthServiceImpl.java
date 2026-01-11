@@ -14,7 +14,7 @@ import com.mynextduty.core.exception.KeyLoadingException;
 import com.mynextduty.core.exception.UserNotFoundException;
 import com.mynextduty.core.repository.AuthRepository;
 import com.mynextduty.core.service.AuthService;
-import com.mynextduty.core.utils.JwtUtil;
+import com.mynextduty.core.config.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -71,17 +71,13 @@ public class AuthServiceImpl implements AuthService {
             .lastName(registerRequestDto.getLastName())
             .isVerified(false)
             .build();
-
     user = authRepository.save(user);
     log.info("New user registered with email: {}", email);
-
     // Generate tokens
     String accessToken = jwtUtil.generateToken(email);
     String refreshToken = jwtUtil.generateRefreshToken(email);
-
     // Set refresh token cookie
     setRefreshTokenCookie(httpServletResponse, refreshToken);
-
     return AuthResponseDto.builder()
         .email(user.getEmail())
         .accessToken(accessToken)
@@ -94,7 +90,6 @@ public class AuthServiceImpl implements AuthService {
       AuthRequestDto authRequestDto, HttpServletResponse httpServletResponse) {
     String email = authRequestDto.getEmail();
     String password = authRequestDto.getPassword();
-
     User user =
         authRepository
             .getByEmail(email)
@@ -103,22 +98,17 @@ public class AuthServiceImpl implements AuthService {
                   log.warn("Login attempt with non-existent email: {}", email);
                   return new UserNotFoundException("Invalid email or password");
                 });
-
     // Verify password
     if (!passwordEncoder.matches(password, user.getPassword())) {
       log.warn("Invalid password attempt for email: {}", email);
       throw new GenericApplicationException("Invalid email or password");
     }
-
     // Generate tokens
     String accessToken = jwtUtil.generateToken(email);
     String refreshToken = jwtUtil.generateRefreshToken(email);
-
     // Set refresh token cookie
     setRefreshTokenCookie(httpServletResponse, refreshToken);
-
     log.info("User logged in successfully: {}", email);
-
     return AuthResponseDto.builder()
         .email(user.getEmail())
         .accessToken(accessToken)
@@ -133,32 +123,25 @@ public class AuthServiceImpl implements AuthService {
       if (jwtUtil.isTokenExpired(refreshToken)) {
         throw new GenericApplicationException("Refresh token expired.");
       }
-
       String email = jwtUtil.extractUsername(refreshToken);
-
       if (!jwtUtil.validateToken(refreshToken, email)) {
         throw new GenericApplicationException("Invalid or expired refresh token");
       }
-
       // Verify user still exists
       User user =
           authRepository
               .getByEmail(email)
               .orElseThrow(() -> new UserNotFoundException("User not found"));
-
       // Generate new tokens
       String newAccessToken = jwtUtil.generateToken(email);
       String newRefreshToken = jwtUtil.generateRefreshToken(email);
-
       // Set new refresh token cookie
       setRefreshTokenCookie(httpServletResponse, newRefreshToken);
-
       return AuthResponseDto.builder()
           .email(user.getEmail())
           .accessToken(newAccessToken)
           .refreshToken(newRefreshToken)
           .build();
-
     } catch (Exception e) {
       log.error("Error refreshing token", e);
       throw new GenericApplicationException("Failed to refresh token");
@@ -171,7 +154,6 @@ public class AuthServiceImpl implements AuthService {
         authRepository
             .getByEmail(email)
             .orElseThrow(() -> new UserNotFoundException("User not found"));
-
     return UserProfileDto.builder()
         .id(user.getId())
         .email(user.getEmail())
