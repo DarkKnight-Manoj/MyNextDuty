@@ -1,13 +1,15 @@
-package com.mynextduty.core.security;
+package com.mynextduty.core.config.security;
 
 import com.mynextduty.core.dto.auth.CustomUserDetails;
-import com.mynextduty.core.utils.JwtUtil;
+import com.mynextduty.core.service.BlackListTokenService;
+import com.mynextduty.core.service.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,16 +25,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
   private final CustomUserDetailsService userDetailsService;
-  private final BlackListedTokenRepository blackListedTokenRepository;
-  private final TokenBlacklistUtil tokenBlacklisterUtil;
+  private final BlackListTokenService blackListTokenService;
 
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
       throws ServletException, IOException {
-
     String authHeader = request.getHeader("Authorization");
-
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       log.warn("Missing or invalid Authorization header");
       jwtUtil.writeCustomErrorResponse(
@@ -43,11 +44,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
           "Missing or invalid Authorization header.");
       return;
     }
-
     String token = authHeader.substring(7).trim();
-
     try {
-      if (blackListedTokenRepository.existsByToken(token)) {
+      if (blackListTokenService.checkTokenExist(token)) {
         log.warn("Blacklisted token used: {}", token);
         jwtUtil.writeCustomErrorResponse(
             response,
@@ -59,24 +58,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       }
       String username = jwtUtil.extractUsername(token);
       if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
         CustomUserDetails customUserDetails =
             (CustomUserDetails) userDetailsService.loadUserByUsername(username);
-
         if (jwtUtil.validateToken(token, customUserDetails)) {
           UsernamePasswordAuthenticationToken authToken =
               new UsernamePasswordAuthenticationToken(
                   customUserDetails, null, customUserDetails.getAuthorities());
-
           authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
           SecurityContextHolder.getContext().setAuthentication(authToken);
         }
       }
     } catch (ExpiredJwtException e) {
       log.warn("Expired token: {}", token);
-
-      if (!blackListedTokenRepository.existsByToken(token)) {
-        tokenBlacklisterUtil.blacklistToken(token);
+      if (!blackListTokenService.checkTokenExist(token)) {
+        blackListTokenService.blacklistToken(token);
         log.info("Expired token blacklisted: {}", token);
       }
       jwtUtil.writeCustomErrorResponse(

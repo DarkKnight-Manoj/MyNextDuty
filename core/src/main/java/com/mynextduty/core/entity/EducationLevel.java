@@ -38,6 +38,7 @@ public class EducationLevel {
   private Integer levelRank; // 1-10 for ordering
 
   @Column(nullable = false)
+  @Builder.Default
   private boolean isActive = true;
 
   @OneToMany(mappedBy = "educationLevel", fetch = FetchType.LAZY)

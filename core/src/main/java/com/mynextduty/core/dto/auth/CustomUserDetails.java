@@ -2,7 +2,6 @@ package com.mynextduty.core.dto.auth;
 
 import java.util.Collection;
 import java.util.Collections;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @RequiredArgsConstructor
 @ToString
 @Builder

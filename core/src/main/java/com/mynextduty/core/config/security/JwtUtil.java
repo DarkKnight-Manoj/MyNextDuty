@@ -1,4 +1,4 @@
-package com.mynextduty.core.utils;
+package com.mynextduty.core.config.security;
 
 import com.mynextduty.core.dto.auth.CustomUserDetails;
 import io.jsonwebtoken.Claims;
@@ -24,7 +24,7 @@ public class JwtUtil {
 
   private final String secretKey;
 
-  public JwtUtil(@Value("${jwt.secretKey:}") String secretKey) {
+  public JwtUtil(@Value("${core.jwt.secret:}") String secretKey) {
     this.secretKey = secretKey;
   }
 
