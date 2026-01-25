@@ -1,4 +1,4 @@
-package com.mynextduty.core.dto.auth;
+package com.mynextduty.core.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @Setter
-public class RegisterRequestDto {
+public class UserRegisterRequestDto {
 
   @NotBlank(message = "Email is required")
   @Email(message = "Invalid email format")

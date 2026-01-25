@@ -1,7 +1,7 @@
 package com.mynextduty.core.service.impl;
 
 import com.mynextduty.core.dto.GlobalMessageDTO;
-import com.mynextduty.core.dto.auth.RegisterRequestDto;
+import com.mynextduty.core.dto.user.UserRegisterRequestDto;
 import com.mynextduty.core.entity.User;
 import com.mynextduty.core.exception.GenericApplicationException;
 import com.mynextduty.core.repository.UserRepository;
@@ -20,7 +20,7 @@ public class UserAccountServiceImpl implements UserAccountService {
   @Override
   @Transactional
   public GlobalMessageDTO register(
-      RegisterRequestDto registerRequestDto, HttpServletResponse httpServletResponse) {
+      UserRegisterRequestDto registerRequestDto, HttpServletResponse httpServletResponse) {
     if (userRepository.findByEmail(registerRequestDto.getEmail()).isPresent()) {
       throw new GenericApplicationException("User already exists.", 409);
     }

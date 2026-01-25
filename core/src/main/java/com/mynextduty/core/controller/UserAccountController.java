@@ -3,7 +3,7 @@ package com.mynextduty.core.controller;
 import com.mynextduty.core.dto.GlobalMessageDTO;
 import com.mynextduty.core.dto.ResponseDto;
 import com.mynextduty.core.dto.SuccessResponseDto;
-import com.mynextduty.core.dto.auth.RegisterRequestDto;
+import com.mynextduty.core.dto.user.UserRegisterRequestDto;
 import com.mynextduty.core.service.impl.UserAccountService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,7 +21,7 @@ public class UserAccountController {
 
   @PostMapping("/register")
   public ResponseDto<GlobalMessageDTO> register(
-      @Valid @RequestBody RegisterRequestDto registerDto, HttpServletResponse response) {
+      @Valid @RequestBody UserRegisterRequestDto registerDto, HttpServletResponse response) {
     return new SuccessResponseDto<>(userAccountService.register(registerDto, response));
   }
 }

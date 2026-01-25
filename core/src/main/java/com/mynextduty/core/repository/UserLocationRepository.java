@@ -1,38 +1,57 @@
 package com.mynextduty.core.repository;
 
+import com.mynextduty.core.dto.projection.NearbyUserLocation;
+import com.mynextduty.core.dto.projection.NearbyUserProjection;
 import com.mynextduty.core.entity.UserLocation;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-public interface UserLocationRepository
-        extends JpaRepository<UserLocation, Long> {
+@Repository
+public interface UserLocationRepository extends JpaRepository<UserLocation, Long> {
 
-    @Query(value = """
-    SELECT 
-      u.id,
-      u.first_name,
-      u.last_name,
-      u.email,
-      u.current_occupation,
-      u.life_stage,
-      ST_Y(ul.location::geometry) AS lat,
-      ST_X(ul.location::geometry) AS lng
-    FROM user_locations ul
-    JOIN users u ON u.id = ul.user_id
-    WHERE ST_DWithin(
-      ul.location,
-      ST_MakePoint(:lng, :lat)::geography,
-      :radius * 1000
-    )
-    """, nativeQuery = true)
-    List<Object[]> findNearbyUsersWithLocation(
-            double lat,
-            double lng,
-            int radius
-    );
+  @Query(
+      value =
+          """
+        SELECT ul.user_id as userId, ul.location
+        FROM user_locations ul
+        WHERE ul.user_id <> :userId
+          AND ST_DWithin(
+              ul.location,
+              (SELECT location FROM user_locations WHERE user_id = :userId),
+              :radiusMeters
+          )
+        """,
+      nativeQuery = true)
+  List<NearbyUserLocation> findNearbyUserLocations(
+      @Param("userId") Long userId, @Param("radiusMeters") double radiusMeters);
 
-    Optional<UserLocation> findByUserId(Long userId);
+  @Query(
+      value =
+          """
+      SELECT ul.user_id AS userId,
+             ST_Distance(
+                 ul.location,
+                 (SELECT location FROM user_locations WHERE user_id = :userId)
+             ) AS distance
+      FROM user_locations ul
+      WHERE ul.user_id <> :userId
+        AND ST_DWithin(
+            ul.location,
+            (SELECT location FROM user_locations WHERE user_id = :userId),
+            :radiusMeters
+        )
+      ORDER BY distance
+      LIMIT :limit
+      """,
+      nativeQuery = true)
+  List<NearbyUserProjection> findNearbyUserLocationsSorted(
+      @Param("userId") Long userId,
+      @Param("radiusMeters") double radiusMeters,
+      @Param("limit") int limit);
+
+  Optional<UserLocation> findByUserId(Long userId);
 }

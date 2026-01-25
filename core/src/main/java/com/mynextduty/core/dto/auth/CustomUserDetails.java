@@ -17,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @ToString
 @Builder
 public class CustomUserDetails implements UserDetails {
-
+  private final Long userId;
   private final String username;
   private final String password;
   private final String role;
